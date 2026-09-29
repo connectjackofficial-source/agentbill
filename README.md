@@ -35,6 +35,11 @@ python -m agentbill --tool claude-code   # one tool only
 
 No API keys, no cloud. Everything is read from your machine.
 
+## FAQ
+
+**Why not just check the provider dashboard?** Because you use three providers.
+This gives you one table.
+
 ## License
 
 MIT
