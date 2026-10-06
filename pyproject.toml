@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentbill"
+version = "0.1.0"
+description = "Track token usage and cost across AI coding agents"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
