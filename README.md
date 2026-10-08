@@ -22,23 +22,31 @@ python -m pip install -r requirements.txt
 ## Usage
 
 ```bash
-python -m agentbill today      # today's usage per tool
-python -m agentbill week       # this week
-python -m agentbill --tool claude-code   # one tool only
+# record a call (from your own scripts or the log parsers)
+python -m agentbill add claude-code --model claude-sonnet --tokens-in 1000 --tokens-out 500
+
+# report per tool (today / week / all)
+python -m agentbill report today
+python -m agentbill report week
+
+# export everything to CSV for a spreadsheet
+python -m agentbill export --out ledger.csv
 ```
 
-## What it reads
+## How it works
 
-- Claude Code: local session logs
-- Cursor: usage JSON
-- Codex: CLI usage stats
-
-No API keys, no cloud. Everything is read from your machine.
+A local SQLite ledger (`~/.agentbill/ledger.db`) stores every call. Costs are
+estimated from per-model-family prices (input/output per 1k tokens) with zero
+configuration. Log parsers for Claude Code / Cursor / Codex feed into the
+same ledger.
 
 ## FAQ
 
 **Why not just check the provider dashboard?** Because you use three providers.
 This gives you one table.
+
+**Are the prices exact?** They are approximate model-family rates. Pass exact
+costs if you need invoice-grade numbers.
 
 ## License
 
