@@ -37,6 +37,10 @@ CREATE TABLE IF NOT EXISTS entries (
     tokens_out INTEGER DEFAULT 0,
     cost REAL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS budgets (
+    tool TEXT PRIMARY KEY,
+    monthly_limit REAL NOT NULL
+);
 """
 
 
@@ -110,3 +114,31 @@ class Ledger:
 
     def close(self):
         self.conn.close()
+
+    def set_budget(self, tool: str, monthly_limit: float) -> bool:
+        """Set a monthly $ budget cap for a tool. Returns True if it was
+        already over budget."""
+        self.conn.execute(
+            "INSERT OR REPLACE INTO budgets (tool, monthly_limit) VALUES (?,?)",
+            (tool, monthly_limit))
+        self.conn.commit()
+        return self.budget_status().get(tool, {}).get("over", False)
+
+    def budget_status(self) -> dict:
+        """Per-tool spending vs budget for the current calendar month."""
+        month = time.strftime("%Y-%m")
+        spent = {}
+        for row in self.conn.execute(
+                "SELECT tool, SUM(cost) FROM entries "
+                "WHERE ts LIKE ? GROUP BY tool", (month + "%",)):
+            spent[row[0]] = round(row[1] or 0, 6)
+        out = {}
+        for tool, limit in self.conn.execute("SELECT tool, monthly_limit FROM budgets"):
+            used = spent.get(tool, 0.0)
+            out[tool] = {
+                "spent": used,
+                "limit": limit,
+                "remaining": round(limit - used, 6),
+                "over": used > limit,
+            }
+        return out
