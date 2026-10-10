@@ -98,6 +98,26 @@ class Ledger:
     def total_cost(self, period: str = "today") -> float:
         return round(sum(v["cost"] for v in self.summary(period).values()), 6)
 
+    def usage_by_model(self, period: str = "today") -> dict:
+        """Aggregate cost by model family for a period: today | week | all."""
+        if period == "today":
+            day = time.strftime("%Y-%m-%d")
+            where = "WHERE ts LIKE ?"
+            arg = (day + "%",)
+        elif period == "week":
+            where = "WHERE ts >= datetime('now', '-7 days')"
+            arg = ()
+        else:
+            where = ""
+            arg = ()
+        rows = self.conn.execute(
+            f"SELECT model, COUNT(*), SUM(tokens_in), SUM(tokens_out), "
+            f"SUM(cost) FROM entries {where} "
+            f"GROUP BY model ORDER BY SUM(cost) DESC", arg).fetchall()
+        return {r[0] or "other": {"calls": r[1], "tokens_in": r[2],
+                                  "tokens_out": r[3],
+                                  "cost": round(r[4] or 0, 6)} for r in rows}
+
     def export_csv(self, path: Optional[Path] = None) -> Path:
         """Write all entries to CSV. Returns the output path."""
         import csv
