@@ -18,6 +18,8 @@ def main():
     r = sub.add_parser("report", help="aggregate by tool")
     r.add_argument("period", nargs="?", default="today",
                    choices=["today", "week", "all"])
+    r.add_argument("--by-model", action="store_true",
+                   help="aggregate by model family instead of tool")
 
     e = sub.add_parser("export", help="write entries to CSV")
     e.add_argument("--out", default=None)
@@ -37,7 +39,10 @@ def main():
                          args.tokens_in, args.tokens_out)
         print(json.dumps({"recorded": True, "id": rid}))
     elif args.cmd == "report":
-        print(json.dumps(ledger.summary(period=args.period), indent=2))
+        if getattr(args, "by_model", False):
+            print(json.dumps(ledger.usage_by_model(period=args.period), indent=2))
+        else:
+            print(json.dumps(ledger.summary(period=args.period), indent=2))
         print(f"total: ${ledger.total_cost(period=args.period)}")
     elif args.cmd == "export":
         out = ledger.export_csv(args.out)

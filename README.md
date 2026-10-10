@@ -29,6 +29,9 @@ python -m agentbill add claude-code --model claude-sonnet --tokens-in 1000 --tok
 python -m agentbill report today
 python -m agentbill report week
 
+# same report, but grouped by model family instead of tool
+python -m agentbill report today --by-model
+
 # export everything to CSV for a spreadsheet
 python -m agentbill export --out ledger.csv
 

@@ -5,6 +5,7 @@
 - [x] per-model pricing table (approximate)
 - [x] export to CSV
 - [x] monthly budget caps (set / status)
+- [x] usage-by-model aggregation (report --by-model)
 - [ ] Claude Code log parser
 - [ ] Cursor usage JSON parser
 - [ ] Codex usage parser
