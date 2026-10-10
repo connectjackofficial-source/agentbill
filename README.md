@@ -31,6 +31,11 @@ python -m agentbill report week
 
 # export everything to CSV for a spreadsheet
 python -m agentbill export --out ledger.csv
+
+# cap monthly spend per tool
+python -m agentbill budget set claude-code --limit 20
+python -m agentbill budget status
+# {"claude-code": {"spent": 3.2, "limit": 20.0, "remaining": 16.8, "over": false}}
 ```
 
 ## How it works
