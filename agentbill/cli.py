@@ -22,6 +22,13 @@ def main():
     e = sub.add_parser("export", help="write entries to CSV")
     e.add_argument("--out", default=None)
 
+    b = sub.add_parser("budget", help="set or check monthly budgets")
+    bsub = b.add_subparsers(dest="bcmd", required=True)
+    bs = bsub.add_parser("set", help="set a budget cap")
+    bs.add_argument("tool", choices=["claude-code", "cursor", "codex"])
+    bs.add_argument("--limit", type=float, required=True, help="monthly $ cap")
+    bsub.add_parser("status", help="show spending vs budget")
+
     args = ap.parse_args()
     ledger = Ledger()
 
@@ -35,6 +42,13 @@ def main():
     elif args.cmd == "export":
         out = ledger.export_csv(args.out)
         print(json.dumps({"exported": str(out)}))
+    elif args.cmd == "budget":
+        if args.bcmd == "set":
+            over = ledger.set_budget(args.tool, args.limit)
+            print(json.dumps({"budget": args.tool, "limit": args.limit,
+                              "already_over": over}))
+        elif args.bcmd == "status":
+            print(json.dumps(ledger.budget_status(), indent=2))
     ledger.close()
 
 
