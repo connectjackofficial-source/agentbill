@@ -39,6 +39,18 @@ python -m agentbill export --out ledger.csv
 python -m agentbill budget set claude-code --limit 20
 python -m agentbill budget status
 # {"claude-code": {"spent": 3.2, "limit": 20.0, "remaining": 16.8, "over": false}}
+
+# daily cost series for charting (gap-free, N days)
+python -m agentbill report --by-day 14
+```
+
+As a library, the daily series is one call — every day is present (zero
+cost on idle days), so you can feed it straight into a chart:
+
+```python
+from agentbill.bill import Ledger
+series = Ledger().cost_by_day(days=30)
+# [{"day": "2026-09-14", "calls": 12, "tokens_in": 3400, "tokens_out": 900, "cost": 0.012}, ...]
 ```
 
 ## How it works
