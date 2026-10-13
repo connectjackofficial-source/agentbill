@@ -118,6 +118,35 @@ class Ledger:
                                   "tokens_out": r[3],
                                   "cost": round(r[4] or 0, 6)} for r in rows}
 
+    def cost_by_day(self, days: int = 7) -> list:
+        """Daily cost series for the last *days* days (oldest first).
+
+        Returns [{"day": "2026-10-13", "calls": n, "tokens_in": n,
+        "tokens_out": n, "cost": f}]. Days with no activity are included
+        with zero cost so the series is gap-free for charting.
+        """
+        import datetime
+        today = datetime.date.today()
+        start = today - datetime.timedelta(days=days - 1)
+        rows = self.conn.execute(
+            "SELECT substr(ts, 1, 10) AS day, COUNT(*), "
+            "SUM(tokens_in), SUM(tokens_out), SUM(cost) "
+            "FROM entries WHERE ts >= ? GROUP BY day ORDER BY day",
+            (start.isoformat(),)).fetchall()
+        by_day = {r[0]: r for r in rows}
+        out = []
+        for i in range(days):
+            day = (start + datetime.timedelta(days=i)).isoformat()
+            r = by_day.get(day)
+            if r:
+                out.append({"day": day, "calls": r[1],
+                            "tokens_in": r[2] or 0, "tokens_out": r[3] or 0,
+                            "cost": round(r[4] or 0, 6)})
+            else:
+                out.append({"day": day, "calls": 0, "tokens_in": 0,
+                            "tokens_out": 0, "cost": 0.0})
+        return out
+
     def export_csv(self, path: Optional[Path] = None) -> Path:
         """Write all entries to CSV. Returns the output path."""
         import csv
