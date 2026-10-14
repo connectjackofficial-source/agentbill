@@ -42,6 +42,10 @@ python -m agentbill budget status
 
 # daily cost series for charting (gap-free, N days)
 python -m agentbill report --by-day 14
+
+# which tools are over / near their monthly budget?
+python -m agentbill budget alert
+# [{"tool": "claude-code", "spent": 18.2, "limit": 20.0, "usage": 0.91, "level": "warn"}]
 ```
 
 As a library, the daily series is one call — every day is present (zero
