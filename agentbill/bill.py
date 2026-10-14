@@ -191,3 +191,22 @@ class Ledger:
                 "over": used > limit,
             }
         return out
+
+    def budget_alert(self, warn_at: float = 0.8) -> list:
+        """Return tools that are over budget or approaching it.
+
+        *warn_at* is the fraction of the monthly limit that triggers a
+        warning (default 0.8 = 80%). Each item carries the same fields as
+        :meth:`budget_status` plus ``usage`` (spent/limit) and ``level``
+        (``"over"`` or ``"warn"``).
+        """
+        alerts = []
+        for tool, st in self.budget_status().items():
+            usage = round(st["spent"] / st["limit"], 3) if st["limit"] else None
+            if st["over"]:
+                alerts.append({**st, "tool": tool, "usage": usage,
+                               "level": "over"})
+            elif st["limit"] and st["spent"] / st["limit"] >= warn_at:
+                alerts.append({**st, "tool": tool, "usage": usage,
+                               "level": "warn"})
+        return alerts

@@ -30,6 +30,9 @@ def main():
     bs.add_argument("tool", choices=["claude-code", "cursor", "codex"])
     bs.add_argument("--limit", type=float, required=True, help="monthly $ cap")
     bsub.add_parser("status", help="show spending vs budget")
+    ba = bsub.add_parser("alert", help="tools over or near their budget")
+    ba.add_argument("--warn-at", type=float, default=0.8,
+                    help="warn when spending reaches this fraction (0.8)")
 
     args = ap.parse_args()
     ledger = Ledger()
@@ -54,6 +57,9 @@ def main():
                               "already_over": over}))
         elif args.bcmd == "status":
             print(json.dumps(ledger.budget_status(), indent=2))
+        elif args.bcmd == "alert":
+            print(json.dumps(ledger.budget_alert(warn_at=args.warn_at),
+                             indent=2))
     ledger.close()
 
 
