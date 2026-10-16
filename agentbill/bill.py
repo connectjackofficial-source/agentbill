@@ -5,6 +5,7 @@ Storage is a single SQLite file (zero setup). Rows are keyed by
 """
 from __future__ import annotations
 
+import csv
 import os
 import sqlite3
 import time
@@ -118,6 +119,22 @@ class Ledger:
                                   "tokens_out": r[3],
                                   "cost": round(r[4] or 0, 6)} for r in rows}
 
+    def top_calls(self, n: int = 5, period: str = "all") -> list:
+        """Most expensive individual entries for the period."""
+        if period == "today":
+            where, arg = "WHERE ts LIKE ?", (time.strftime("%Y-%m-%d") + "%",)
+        elif period == "week":
+            where, arg = "WHERE ts >= datetime('now', '-7 days')", ()
+        else:
+            where, arg = "", ()
+        rows = self.conn.execute(
+            f"SELECT id, ts, tool, model, tokens_in, tokens_out, cost "
+            f"FROM entries {where} ORDER BY cost DESC LIMIT ?",
+            (*arg, n)).fetchall()
+        keys = ["id", "ts", "tool", "model", "tokens_in", "tokens_out",
+                "cost"]
+        return [dict(zip(keys, r)) for r in rows]
+
     def cost_by_day(self, days: int = 7) -> list:
         """Daily cost series for the last *days* days (oldest first).
 
@@ -147,13 +164,20 @@ class Ledger:
                             "tokens_out": 0, "cost": 0.0})
         return out
 
-    def export_csv(self, path: Optional[Path] = None) -> Path:
-        """Write all entries to CSV. Returns the output path."""
-        import csv
+    def export_csv(self, path: Optional[Path] = None,
+                   period: str = "all") -> Path:
+        """Write entries to CSV (optionally filtered by period: today | week
+        | all). Returns the output path."""
         out = Path(path) if path else self.path.with_name("ledger.csv")
+        if period == "today":
+            where, arg = "WHERE ts LIKE ?", (time.strftime("%Y-%m-%d") + "%",)
+        elif period == "week":
+            where, arg = "WHERE ts >= datetime('now', '-7 days')", ()
+        else:
+            where, arg = "", ()
         rows = self.conn.execute(
-            "SELECT id, ts, tool, model, tokens_in, tokens_out, cost "
-            "FROM entries ORDER BY ts").fetchall()
+            f"SELECT id, ts, tool, model, tokens_in, tokens_out, cost "
+            f"FROM entries {where} ORDER BY ts", arg).fetchall()
         with open(out, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["id", "ts", "tool", "model",
